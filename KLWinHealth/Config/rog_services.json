@@ -1,0 +1,133 @@
+{
+  // KL Win Health — ASUS / ROG service rules. Edit freely; bump "version" only when shipping new defaults.
+  // Names verified on a ROG Strix G18 (G814JVR) with Armoury Crate 6.x / ASUS System Control Interface v3 (2026),
+  // plus names seen on other ROG/TUF models. First matching rule wins. Unmatched ASUS services = "Unknown — not recommended".
+  "version": 1,
+  "notes": "Protected = needed for fan profiles & performance modes, Fn hotkeys & keyboard backlight, battery charge limit, GPU switching (MUX/Optimus).",
+  "detectPatterns": [ "*asus*", "*armoury*", "rog *", "*rog live*", "lightingservice", "gamesdk*", "glidex*", "asComSvc", "AsusPTPService", "NVDisplay.Container*" ],
+  "detectPublishers": [ "ASUSTeK", "ASUS" ],
+  "rules": [
+    {
+      "names": [ "ArmouryCrateService" ],
+      "category": "Protected",
+      "label": "Fan profiles & performance modes",
+      "reason": "Core Armoury Crate service: Silent / Performance / Turbo modes, fan curves, GPU mode switching, battery charge limit."
+    },
+    {
+      "names": [ "ArmouryCrateControlInterface" ],
+      "category": "Protected",
+      "label": "Armoury Crate control interface",
+      "reason": "Bridge between Armoury Crate and the ASUS ACPI driver (operating modes, MUX switch, keyboard backlight)."
+    },
+    {
+      "names": [ "ASUSOptimization" ],
+      "category": "Protected",
+      "label": "Fn hotkeys & keyboard backlight",
+      "reason": "Part of ASUS System Control Interface: Fn hotkeys, keyboard backlight, battery health charging."
+    },
+    {
+      "names": [ "AsusAppService" ],
+      "category": "Protected",
+      "label": "ASUS App Service",
+      "reason": "Required by Armoury Crate / MyASUS for hardware features (modes, battery charge limit)."
+    },
+    {
+      "names": [ "AsusCertService" ],
+      "category": "Protected",
+      "label": "Armoury Crate certificate service",
+      "reason": "Verifies Armoury Crate components; stopping it can break Armoury Crate features."
+    },
+    {
+      "names": [ "AsusFanControlService", "ASUSFanControlService" ],
+      "category": "Protected",
+      "label": "Fan control",
+      "reason": "Controls fan profiles on some models."
+    },
+    {
+      "names": [ "AsusPTPService" ],
+      "category": "Protected",
+      "label": "Precision touchpad",
+      "reason": "ASUS precision touchpad service (gestures, NumberPad)."
+    },
+    {
+      "names": [ "NVDisplay.ContainerLocalSystem", "NvContainerLocalSystem" ],
+      "category": "Protected",
+      "label": "GPU switching (NVIDIA)",
+      "reason": "NVIDIA display container: Optimus / MUX GPU switching and NVIDIA Control Panel."
+    },
+    {
+      "names": [ "asComSvc", "ATKGFNEXSrv", "AsusAcpiService" ],
+      "category": "Protected",
+      "label": "ASUS ACPI / hotkeys",
+      "reason": "Legacy ASUS ACPI / hotkey services used on some models."
+    },
+    {
+      "names": [ "LightingService" ],
+      "displayNames": [ "*AURA*" ],
+      "category": "Caution",
+      "label": "Aura RGB lighting",
+      "reason": "Controls Aura Sync RGB. Stopping it may leave keyboard/lightbar RGB fixed or off on some models."
+    },
+    {
+      "names": [ "ROG Live Service", "ROGLiveService" ],
+      "category": "Safe",
+      "label": "ROG Live (news/promotions)",
+      "reason": "Delivers ROG news, promotions and Armoury Crate content updates. Not needed for hardware control."
+    },
+    {
+      "names": [ "asus", "asusm", "AsusUpdateCheck", "ASUSUpdateService*" ],
+      "displayNames": [ "ASUS Update Service*" ],
+      "category": "Safe",
+      "label": "ASUS update check",
+      "reason": "Checks for ASUS software updates in the background. You can still update manually from Armoury Crate / MyASUS."
+    },
+    {
+      "names": [ "ArmouryCrateDownloadTool" ],
+      "category": "Safe",
+      "label": "Armoury Crate downloader",
+      "reason": "Downloads Armoury Crate updates. Only needed while updating."
+    },
+    {
+      "names": [ "ASUSSoftwareManager" ],
+      "category": "Safe",
+      "label": "ASUS software updates",
+      "reason": "MyASUS software/driver update manager. Not needed for hardware control."
+    },
+    {
+      "names": [ "ASUSSystemAnalysis", "ASUSSystemDiagnosis" ],
+      "category": "Safe",
+      "label": "Diagnostics & analytics",
+      "reason": "MyASUS system analysis / diagnosis and usage analytics."
+    },
+    {
+      "names": [ "ASUSSwitch", "ASUSLinkNear", "ASUSLinkNearExt", "ASUSLinkRemote" ],
+      "category": "Safe",
+      "label": "ASUS Link / Switch",
+      "reason": "Phone-link and device-transfer features of MyASUS."
+    },
+    {
+      "names": [ "GlideXService", "GlideXServiceExt", "GlideXRemoteService", "GlideXNearService" ],
+      "category": "Safe",
+      "label": "GlideX (screen sharing)",
+      "reason": "ASUS GlideX screen extend / mirror / remote. Only needed if you use GlideX."
+    },
+    {
+      "names": [ "GameSDK Service", "GameSDK*" ],
+      "category": "Safe",
+      "label": "Game SDK (if unused)",
+      "reason": "ASUS Game SDK for in-game lighting/effects integration. Safe to stop if you don't use game-synced lighting."
+    },
+    {
+      "names": [ "AsusROGLSLService", "ROG Live Dash*" ],
+      "category": "Safe",
+      "label": "ROG telemetry",
+      "reason": "ROG analytics / live dashboard service."
+    },
+    {
+      "names": [ "ASUSScreenXpertService*", "ScreenXpert*" ],
+      "category": "Caution",
+      "label": "ScreenXpert (dual-screen)",
+      "reason": "Needed for ScreenPad / ScreenPad Plus on dual-screen models."
+    }
+  ]
+}

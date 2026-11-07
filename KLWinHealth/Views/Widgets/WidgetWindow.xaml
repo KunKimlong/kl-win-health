@@ -1,0 +1,55 @@
+<Window x:Class="KLWinHealth.Views.Widgets.WidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:w="clr-namespace:KLWinHealth.Views.Widgets"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        ShowInTaskbar="False" ShowActivated="False" SizeToContent="WidthAndHeight" Focusable="False"
+        Title="KL Win Health widget" UseLayoutRounding="True">
+    <!-- DataContext = WidgetModel -->
+    <Grid x:Name="Root" Margin="8">
+        <Grid.ContextMenu>
+            <ContextMenu x:Name="Menu">
+                <MenuItem Header="Edit in KL Win Health" Click="OnEditClick">
+                    <MenuItem.Icon><iconPacks:PackIconMaterial Kind="Pencil" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Duplicate" Click="OnDuplicateClick">
+                    <MenuItem.Icon><iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Reset size" Click="OnResetSizeClick">
+                    <MenuItem.Icon><iconPacks:PackIconMaterial Kind="ArrowCollapseAll" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Remove" Click="OnRemoveClick">
+                    <MenuItem.Icon><iconPacks:PackIconMaterial Kind="DeleteOutline" Width="13" Height="13" Foreground="{StaticResource DangerBrush}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Lock all widgets" Click="OnLockClick" FontWeight="SemiBold">
+                    <MenuItem.Icon><iconPacks:PackIconMaterial Kind="Lock" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </Grid.ContextMenu>
+
+        <w:WidgetContent x:Name="Body">
+            <w:WidgetContent.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding Config.Scale}" ScaleY="{Binding Config.Scale}" />
+            </w:WidgetContent.LayoutTransform>
+        </w:WidgetContent>
+
+        <!-- Edit mode, only while this widget is selected (clicked): dashed outline, name tag, corner handles -->
+        <Grid x:Name="EditOverlay" Visibility="Collapsed">
+            <Rectangle Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" StrokeDashArray="4 3" Margin="-4" IsHitTestVisible="False" />
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,-8,0,0" Padding="6,0" Background="{StaticResource AccentBrush}"
+                    IsHitTestVisible="False">
+                <TextBlock Text="{Binding Config.DisplayName}" Foreground="#FF0B0D0C" FontSize="11" FontWeight="Bold" />
+            </Border>
+            <Rectangle x:Name="HandleTL" Tag="TL" Width="10" Height="10" Margin="-9,-9,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                       Fill="{StaticResource AccentBrush}" Cursor="SizeNWSE" />
+            <Rectangle x:Name="HandleTR" Tag="TR" Width="10" Height="10" Margin="0,-9,-9,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                       Fill="{StaticResource AccentBrush}" Cursor="SizeNESW" />
+            <Rectangle x:Name="HandleBL" Tag="BL" Width="10" Height="10" Margin="-9,0,0,-9" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                       Fill="{StaticResource AccentBrush}" Cursor="SizeNESW" />
+            <Rectangle x:Name="HandleBR" Tag="BR" Width="10" Height="10" Margin="0,0,-9,-9" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                       Fill="{StaticResource AccentBrush}" Cursor="SizeNWSE" />
+        </Grid>
+    </Grid>
+</Window>

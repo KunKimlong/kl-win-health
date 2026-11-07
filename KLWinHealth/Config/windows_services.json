@@ -1,0 +1,49 @@
+{
+  // KL Win Health — Windows service rules. First matching rule wins. Services not listed are "Not classified".
+  // Protected = "Critical": buttons disabled. Windows Defender is additionally hard-protected in code.
+  "version": 1,
+  "rules": [
+    { "names": [ "WinDefend", "WdNisSvc", "Sense", "MDCoreSvc", "SecurityHealthService", "wscsvc", "mpssvc", "BFE" ],
+      "category": "Protected", "label": "Security", "reason": "Windows Security / Defender / Firewall. Must always run (Virus check depends on Defender)." },
+    { "names": [ "wuauserv", "UsoSvc", "WaaSMedicSvc", "BITS", "TrustedInstaller", "CryptSvc" ],
+      "category": "Protected", "label": "Windows Update", "reason": "Needed for security updates." },
+    { "names": [ "RpcSs", "RpcEptMapper", "DcomLaunch", "LSM", "SamSs", "EventLog", "Winmgmt", "PlugPlay", "Power", "ProfSvc",
+                 "Schedule", "UserManager", "gpsvc", "BrokerInfrastructure", "SystemEventsBroker", "CoreMessagingRegistrar",
+                 "StateRepository", "KeyIso", "LanmanWorkstation", "EventSystem", "SENS", "ShellHWDetection", "AppXSvc",
+                 "ClipSVC", "camsvc", "TimeBrokerSvc", "CoreMessaging*", "seclogon", "VaultSvc", "Appinfo", "msiserver",
+                 "TokenBroker", "DispBrokerDesktopSvc", "DeviceInstall", "DsmSvc", "FontCache", "TextInputManagementService",
+                 "cbdhsvc_*", "OneSyncSvc_*", "UnistoreSvc_*", "UserDataSvc_*", "CDPUserSvc_*", "WpnUserService_*", "WpnService",
+                 "webthreatdefsvc", "webthreatdefusersvc_*", "InstallService", "LicenseManager", "StorSvc", "Wcmsvc", "netprofm",
+                 "SgrmBroker", "embeddedmode", "hidserv" ],
+      "category": "Protected", "label": "Core Windows", "reason": "Core Windows component. Stopping it can make Windows unstable or unbootable." },
+    { "names": [ "Dhcp", "Dnscache", "nsi", "NlaSvc", "WlanSvc", "iphlpsvc", "netman", "WinHttpAutoProxySvc", "mpssvc", "LanmanServer" ],
+      "category": "Protected", "label": "Networking", "reason": "Needed for network / Wi-Fi connectivity." },
+    { "names": [ "Audiosrv", "AudioEndpointBuilder" ],
+      "category": "Protected", "label": "Audio", "reason": "Needed for sound." },
+    { "names": [ "Themes", "UxSms" ],
+      "category": "Protected", "label": "Desktop", "reason": "Needed for the Windows desktop look." },
+    { "names": [ "NVDisplay.Container*", "NvContainerLocalSystem", "AMD External Events Utility", "AMD Crash Defender Service", "amdfendr*",
+                 "igfxCUIService*", "igccservice", "IntelGraphicsSoftwareService", "cplspcon", "jhi_service", "WMIRegistrationService",
+                 "Intel(R) *", "RtkAudioUniversalService", "DisplayEnhancementService", "GraphicsPerfSvc" ],
+      "category": "Protected", "label": "Display / GPU driver", "reason": "Graphics or audio driver service." },
+
+    { "names": [ "XblAuthManager", "XblGameSave", "XboxNetApiSvc", "XboxGipSvc" ],
+      "category": "Safe", "label": "Xbox", "reason": "Xbox Live sign-in, cloud saves and accessories. Safe if you don't use Xbox apps/controllers/Game Pass." },
+    { "names": [ "Fax" ], "category": "Safe", "label": "Fax", "reason": "Sends and receives faxes." },
+    { "names": [ "RemoteRegistry" ], "category": "Safe", "label": "Remote registry", "reason": "Lets other computers edit this registry. Safer when stopped." },
+    { "names": [ "DiagTrack" ], "category": "Safe", "label": "Telemetry", "reason": "Connected User Experiences and Telemetry — sends usage data to Microsoft." },
+    { "names": [ "dmwappushservice" ], "category": "Safe", "label": "Telemetry", "reason": "WAP push message routing, used for telemetry/device management." },
+    { "names": [ "MapsBroker" ], "category": "Safe", "label": "Offline maps", "reason": "Downloaded Maps manager." },
+    { "names": [ "lfsvc" ], "category": "Safe", "label": "Location", "reason": "Geolocation service. Apps won't get your location while stopped." },
+    { "names": [ "RetailDemo" ], "category": "Safe", "label": "Retail demo", "reason": "Store demo mode only." },
+    { "names": [ "WMPNetworkSvc" ], "category": "Safe", "label": "Media sharing", "reason": "Windows Media Player network sharing." },
+    { "names": [ "PhoneSvc" ], "category": "Safe", "label": "Phone", "reason": "Telephony state on the device." },
+    { "names": [ "wisvc" ], "category": "Safe", "label": "Insider", "reason": "Windows Insider service — only needed when joining/leaving Insider builds." },
+
+    { "names": [ "Spooler" ], "category": "Caution", "label": "Printing", "reason": "Print Spooler — you won't be able to print or use 'Print to PDF' while it is stopped." },
+    { "names": [ "SysMain" ], "category": "Caution", "label": "SysMain (Superfetch)", "reason": "Preloads apps into RAM. Stopping can free RAM but may make apps start slower." },
+    { "names": [ "WSearch" ], "category": "Caution", "label": "Windows Search", "reason": "Indexes files. Start-menu and Explorer search become slow/incomplete when stopped." },
+    { "names": [ "TabletInputService" ], "category": "Caution", "label": "Touch keyboard", "reason": "Touch keyboard and handwriting panel — needed for touchscreens/pens and emoji panel." },
+    { "names": [ "bthserv", "BTAGService", "BluetoothUserService_*" ], "category": "Caution", "label": "Bluetooth", "reason": "Bluetooth devices (mouse, headphones) stop working while stopped." }
+  ]
+}

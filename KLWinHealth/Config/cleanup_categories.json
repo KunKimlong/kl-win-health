@@ -1,0 +1,45 @@
+{
+  // KL Win Health — Clean storage categories. Environment variables are expanded.
+  // Kind: Folder | RecycleBin | WindowsUpdate | WindowsOld | Dism | BrowserShortcut
+  // Personal folders (Documents, Desktop, Downloads, Pictures, ...) and Prefetch are always refused in code.
+  "version": 1,
+  "categories": [
+    { "id": "user-temp", "name": "User temp files", "level": "Safe", "kind": "Folder",
+      "description": "Temporary files left by apps and installers (%TEMP%). Files changed in the last 2 hours are kept.",
+      "paths": [ "%TEMP%" ], "minAgeHours": 2 },
+    { "id": "windows-temp", "name": "Windows temp files", "level": "Safe", "kind": "Folder",
+      "description": "Temporary files created by Windows and services (C:\\Windows\\Temp). Files changed in the last 2 hours are kept.",
+      "paths": [ "%SystemRoot%\\Temp" ], "minAgeHours": 2 },
+    { "id": "recycle-bin", "name": "Recycle Bin", "level": "Safe", "kind": "RecycleBin",
+      "description": "Files you already deleted, on all drives." },
+    { "id": "thumbnails", "name": "Thumbnail cache", "level": "Safe", "kind": "Folder",
+      "description": "Picture/video thumbnails. Windows rebuilds them when needed. Files in use by Explorer are skipped.",
+      "paths": [ "%LocalAppData%\\Microsoft\\Windows\\Explorer" ], "filePatterns": [ "thumbcache_*.db", "iconcache_*.db" ], "recursive": false },
+    { "id": "wer", "name": "Windows Error Reporting files", "level": "Safe", "kind": "Folder",
+      "description": "Crash and problem reports already processed by Windows.",
+      "paths": [ "%ProgramData%\\Microsoft\\Windows\\WER", "%LocalAppData%\\Microsoft\\Windows\\WER" ] },
+    { "id": "crash-dumps", "name": "Crash dumps", "level": "Safe", "kind": "Folder",
+      "description": "Memory dumps written when apps or Windows crashed.",
+      "paths": [ "%LocalAppData%\\CrashDumps", "%SystemRoot%\\Minidump" ] },
+    { "id": "d3d-cache", "name": "DirectX shader cache", "level": "Safe", "kind": "Folder",
+      "description": "Compiled graphics shaders. Games rebuild them (first launch may be a bit slower).",
+      "paths": [ "%LocalAppData%\\D3DSCache" ] },
+    { "id": "delivery-opt", "name": "Delivery Optimization cache", "level": "Safe", "kind": "Folder",
+      "description": "Update pieces cached to share with other PCs.",
+      "paths": [ "%SystemRoot%\\ServiceProfiles\\NetworkService\\AppData\\Local\\Microsoft\\Windows\\DeliveryOptimization\\Cache", "%SystemRoot%\\SoftwareDistribution\\DeliveryOptimization" ] },
+    { "id": "old-logs", "name": "Old Windows log files", "level": "Safe", "kind": "Folder",
+      "description": "Windows log files older than 7 days (C:\\Windows\\Logs).",
+      "paths": [ "%SystemRoot%\\Logs" ], "minAgeDays": 7 },
+
+    { "id": "wu-download", "name": "Windows Update download cache", "level": "Caution", "kind": "WindowsUpdate",
+      "description": "Already-installed update downloads. Windows Update is stopped during cleaning and started again; pending updates may need to download again.",
+      "paths": [ "%SystemRoot%\\SoftwareDistribution\\Download" ] },
+    { "id": "windows-old", "name": "Previous Windows installation (Windows.old)", "level": "Caution", "kind": "WindowsOld",
+      "description": "Removes the ability to roll back to your previous Windows version. Can be many GB.",
+      "paths": [ "%SystemDrive%\\Windows.old" ] },
+    { "id": "dism", "name": "Component store cleanup (DISM)", "level": "Caution", "kind": "Dism",
+      "description": "Removes superseded Windows components (DISM /StartComponentCleanup). Slow (can take 10+ minutes). Installed updates can no longer be uninstalled afterwards." },
+    { "id": "browser-cache", "name": "Browser cache", "level": "Caution", "kind": "BrowserShortcut",
+      "description": "Opens the Browser cleaner, where you can clear cache per browser and profile (browser must be closed)." }
+  ]
+}

@@ -1,0 +1,192 @@
+<UserControl x:Class="KLWinHealth.Views.Widgets.WidgetContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:KLWinHealth.Controls"
+             xmlns:m="clr-namespace:KLWinHealth.Models"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             TextElement.Foreground="{Binding TextBrush}"
+             TextElement.FontFamily="{Binding Font}"
+             TextElement.FontSize="{Binding Config.FontSize}">
+    <!-- The visual of one desktop widget (DataContext = WidgetModel). Shared by the desktop window and the editor preview. -->
+    <UserControl.Resources>
+        <!-- ===== Text label -->
+        <DataTemplate x:Key="TextTemplate">
+            <TextBlock Text="{Binding Config.Text}" TextWrapping="Wrap" MaxWidth="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=30}" />
+        </DataTemplate>
+
+        <!-- ===== Clock -->
+        <DataTemplate x:Key="ClockTemplate">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding TimeText}" FontWeight="Bold" FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=3}"
+                               FontFamily="{StaticResource HeadingFont}" />
+                    <TextBlock Text="{Binding AmPmText}" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Bottom"
+                               FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.1}"
+                               Padding="0,0,0,8" FontFamily="{StaticResource HeadingFont}" />
+                </StackPanel>
+                <TextBlock Text="{Binding DateText}" Foreground="{Binding MutedBrush}" Margin="2,-4,0,0"
+                           Visibility="{Binding Config.ShowDate, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- ===== Calendar -->
+        <DataTemplate x:Key="CalendarTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding MonthTitle}" FontWeight="Bold" FontFamily="{StaticResource HeadingFont}" Margin="0,0,0,6"
+                           FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.3}" />
+                <ItemsControl ItemsSource="{Binding DayNames}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="7" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" HorizontalAlignment="Center" FontWeight="SemiBold"
+                                       Foreground="{Binding DataContext.MutedBrush, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                       FontSize="{Binding DataContext.Config.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Mul}, ConverterParameter=0.75}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl ItemsSource="{Binding Days}" Margin="0,4,0,0">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="7" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border x:Name="Bd" Margin="1" Padding="0,2"
+                                    MinWidth="{Binding DataContext.Config.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Mul}, ConverterParameter=1.9}">
+                                <TextBlock x:Name="T" Text="{Binding Text}" HorizontalAlignment="Center" />
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsOtherMonth}" Value="True">
+                                    <Setter TargetName="T" Property="Opacity" Value="0.3" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                                    <Setter TargetName="T" Property="Foreground" Value="#FF0B0D0C" />
+                                    <Setter TargetName="T" Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- ===== System monitor -->
+        <DataTemplate x:Key="MonitorTemplate">
+            <ItemsControl ItemsSource="{Binding MonitorRows}"
+                          MinWidth="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=14}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="L" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Label}" FontWeight="Bold" FontFamily="{StaticResource HeadingFont}" Margin="0,0,10,0" VerticalAlignment="Center"
+                                       Foreground="{Binding DataContext.MutedBrush, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            <!-- Bars -->
+                            <Grid Grid.Column="1" VerticalAlignment="Center"
+                                  Visibility="{Binding DataContext.Config.MonitorDisplay, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EqualsConv}, ConverterParameter=Bars}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="{Binding Text}" HorizontalAlignment="Right"
+                                           FontSize="{Binding DataContext.Config.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Mul}, ConverterParameter=0.8}" />
+                                <ProgressBar Grid.Row="1" Value="{Binding Percent, Mode=OneWay}" Maximum="100" Height="5" Margin="0,2,0,0" />
+                            </Grid>
+                            <!-- Numbers -->
+                            <TextBlock Grid.Column="1" Text="{Binding Text}" FontWeight="Bold" HorizontalAlignment="Right" FontFamily="{StaticResource HeadingFont}"
+                                       FontSize="{Binding DataContext.Config.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Mul}, ConverterParameter=1.4}"
+                                       Visibility="{Binding DataContext.Config.MonitorDisplay, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EqualsConv}, ConverterParameter=Numbers}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DataTemplate>
+
+        <!-- ===== Network speed -->
+        <DataTemplate x:Key="NetworkTemplate">
+            <Grid MinWidth="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=10}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <iconPacks:PackIconMaterial Kind="ArrowDownBold" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"
+                                            Width="{Binding Config.FontSize}" Height="{Binding Config.FontSize}" />
+                <TextBlock Grid.Column="1" Text="{Binding DownText}" Margin="8,0,0,0" FontWeight="Bold" FontFamily="{StaticResource HeadingFont}" HorizontalAlignment="Right"
+                           FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.5}" />
+                <iconPacks:PackIconMaterial Grid.Row="1" Kind="ArrowUpBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"
+                                            Width="{Binding Config.FontSize}" Height="{Binding Config.FontSize}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UpText}" Margin="8,0,0,0" FontWeight="Bold" FontFamily="{StaticResource HeadingFont}" HorizontalAlignment="Right"
+                           FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.5}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- ===== Battery -->
+        <DataTemplate x:Key="BatteryTemplate">
+            <StackPanel MinWidth="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=9}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial VerticalAlignment="Center" Width="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.6}"
+                                                Height="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=1.6}">
+                        <iconPacks:PackIconMaterial.Style>
+                            <Style TargetType="iconPacks:PackIconMaterial">
+                                <Setter Property="Kind" Value="Battery" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding BatteryCharging}" Value="True">
+                                        <Setter Property="Kind" Value="BatteryCharging" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding BatteryLow}" Value="True">
+                                        <Setter Property="Kind" Value="BatteryAlert" />
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </iconPacks:PackIconMaterial.Style>
+                    </iconPacks:PackIconMaterial>
+                    <TextBlock Text="{Binding BatteryText}" Margin="8,0,0,0" FontWeight="Bold" FontFamily="{StaticResource HeadingFont}"
+                               FontSize="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=2}" />
+                </StackPanel>
+                <ProgressBar Value="{Binding BatteryPercent, Mode=OneWay}" Maximum="100" Height="5" Margin="0,4,0,4" />
+                <TextBlock Text="{Binding BatteryStatus}" Foreground="{Binding MutedBrush}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <c:AngledBorder x:Name="Frame" Background="{Binding BackgroundBrush}" CornerStyle="{Binding Config.Corner}" CutSize="12"
+                    Padding="{Binding Config.FontSize, Converter={StaticResource Mul}, ConverterParameter=0.9}">
+        <ContentControl Content="{Binding}" Focusable="False" Grid.IsSharedSizeScope="True">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="ContentTemplate" Value="{StaticResource TextTemplate}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Config.TextShadow}" Value="True">
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="1.5" Opacity="0.85" Color="Black" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Config.Type}" Value="{x:Static m:WidgetType.Clock}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource ClockTemplate}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Config.Type}" Value="{x:Static m:WidgetType.Calendar}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource CalendarTemplate}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Config.Type}" Value="{x:Static m:WidgetType.SystemMonitor}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource MonitorTemplate}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Config.Type}" Value="{x:Static m:WidgetType.NetworkSpeed}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource NetworkTemplate}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Config.Type}" Value="{x:Static m:WidgetType.Battery}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource BatteryTemplate}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+    </c:AngledBorder>
+</UserControl>

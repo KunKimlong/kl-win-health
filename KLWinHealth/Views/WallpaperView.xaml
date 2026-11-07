@@ -1,0 +1,185 @@
+<UserControl x:Class="KLWinHealth.Views.WallpaperView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:KLWinHealth.Controls"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <Grid Margin="28,20,28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <c:PageHeader Title="{Binding Title}" Subtitle="{Binding Subtitle}" Icon="ImageOutline">
+            <StackPanel Orientation="Horizontal">
+                <c:GlowButton Icon="BackupRestore" Content="Restore original" Command="{Binding RestoreOriginalCommand}"
+                              ToolTip="Put back the desktop wallpaper you had before KL Win Health changed it" />
+                <c:GlowButton Icon="MonitorLock" Content="Restore lock screen" Margin="8,0,0,0" Command="{Binding RestoreLockScreenCommand}" />
+            </StackPanel>
+        </c:PageHeader>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="330" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ================================================ preview + history -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <c:AngledBorder Style="{StaticResource Card}" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <!-- Monitor mock-up: the canvas is the real screen size, the Viewbox scales it down -->
+                        <Viewbox Stretch="Uniform">
+                            <Border BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="24" CornerRadius="18" Background="#FF0B0F0D" Padding="0">
+                                <Border Width="{Binding ScreenWidth}" Height="{Binding ScreenHeight}" Background="#FF101411" ClipToBounds="True">
+                                    <Grid>
+                                        <Rectangle Fill="{Binding PreviewBrush}" />
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Visibility="{Binding PreviewBrush, Converter={StaticResource InverseNullToVis}}">
+                                            <iconPacks:PackIconMaterial Kind="ImagePlus" Width="160" Height="160" HorizontalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="Choose an image or drop one here" FontSize="64" Foreground="{StaticResource TextMutedBrush}" Margin="0,30,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Border>
+                        </Viewbox>
+                        <Grid Grid.Row="1" Margin="0,12,0,0">
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,330,0">
+                                <TextBlock Text="{Binding SelectedImage, TargetNullValue='No image selected'}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding SelectedImage}" />
+                                <TextBlock Text="{Binding SelectedInfo}" Style="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ComboBox Width="110" ItemsSource="{Binding FitModes}" SelectedItem="{Binding Fit}" ToolTip="How the image fits the screen" />
+                                <c:GlowButton Icon="FolderImage" Content="Browse…" Margin="8,0,0,0" Command="{Binding BrowseCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </c:AngledBorder>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                    <c:GlowButton Icon="MonitorScreenshot" Content="Set as desktop" Variant="Primary" Command="{Binding ApplyDesktopCommand}" />
+                    <c:GlowButton Icon="Lock" Content="Set as lock screen" Margin="8,0,0,0" Command="{Binding ApplyLockScreenCommand}" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,12,0,0">
+                    <TextBlock Text="RECENT" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource IconButton}" Margin="6,0,0,0" ToolTip="Clear history" Command="{Binding ClearHistoryCommand}">
+                        <iconPacks:PackIconMaterial Kind="DeleteSweepOutline" Width="13" Height="13" />
+                    </Button>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,8,0,0" Height="96">
+                    <Grid>
+                        <TextBlock Text="Wallpapers you set appear here." Style="{StaticResource Muted}" VerticalAlignment="Center"
+                                   Visibility="{Binding History.Count, Converter={StaticResource ZeroToVis}}" />
+                        <ItemsControl ItemsSource="{Binding History}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,10,0" Cursor="Hand" ToolTip="{Binding Path}"
+                                            Command="{Binding DataContext.SelectHistoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" BorderThickness="2" BorderBrush="{StaticResource BorderSubtleBrush}" Background="{StaticResource SurfaceBrush}">
+                                                    <Image Source="{Binding Image}" Width="136" Height="80" Stretch="UniformToFill" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ================================================ side panel -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <c:AngledBorder Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="CURRENT" Style="{StaticResource SectionLabel}" Margin="0,0,0,6" />
+                            <TextBlock Text="Desktop" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                            <TextBlock Text="{Binding CurrentWallpaper, TargetNullValue='(solid color)'}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8" />
+                            <TextBlock Text="Lock screen" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                            <TextBlock Text="{Binding CurrentLockScreen, TargetNullValue='Windows default'}" TextWrapping="Wrap" FontSize="12" />
+                        </StackPanel>
+                    </c:AngledBorder>
+
+                    <c:AngledBorder Style="{StaticResource Card}" Margin="0,12,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="SLIDESHOW" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" />
+                                <Border Style="{StaticResource Badge}" HorizontalAlignment="Right" Tag="{Binding SlideshowStateText}">
+                                    <TextBlock Text="{Binding SlideshowStateText}" Style="{StaticResource BadgeText}" />
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="Folder" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SlideshowFolder, Mode=OneWay}" IsReadOnly="True" Tag="Choose a folder…" ToolTip="{Binding SlideshowFolder}" />
+                                <Button Grid.Column="1" Style="{StaticResource IconButton}" Margin="6,0,0,0" ToolTip="Choose folder" Command="{Binding BrowseSlideshowFolderCommand}">
+                                    <iconPacks:PackIconMaterial Kind="FolderOpenOutline" Width="15" Height="15" />
+                                </Button>
+                            </Grid>
+                            <Grid Margin="0,10,0,0">
+                                <TextBlock Text="Change every" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
+                                <ComboBox HorizontalAlignment="Right" Width="110" ItemsSource="{Binding IntervalOptions}"
+                                          SelectedValuePath="Minutes" DisplayMemberPath="Text" SelectedValue="{Binding SlideshowInterval}" />
+                            </Grid>
+                            <CheckBox Content="Shuffle" IsChecked="{Binding SlideshowShuffle}" Margin="0,10,0,0" />
+                            <TextBlock Text="{Binding SlideshowInfo}" Style="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0" />
+                            <UniformGrid Columns="2" Margin="0,10,0,0">
+                                <c:GlowButton Margin="0,0,4,0" Command="{Binding ToggleSlideshowCommand}">
+                                    <c:GlowButton.Style>
+                                        <Style TargetType="c:GlowButton" BasedOn="{StaticResource {x:Type c:GlowButton}}">
+                                            <Setter Property="Icon" Value="Play" />
+                                            <Setter Property="Content" Value="Start" />
+                                            <Setter Property="Variant" Value="Primary" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSlideshowRunning}" Value="True">
+                                                    <Setter Property="Icon" Value="Stop" />
+                                                    <Setter Property="Content" Value="Stop" />
+                                                    <Setter Property="Variant" Value="Secondary" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </c:GlowButton.Style>
+                                </c:GlowButton>
+                                <c:GlowButton Icon="SkipNext" Content="Next" Margin="4,0,0,0" Command="{Binding NextWallpaperCommand}"
+                                              IsEnabled="{Binding IsSlideshowRunning}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </c:AngledBorder>
+
+                    <TextBlock Style="{StaticResource Muted}" FontSize="11.5" TextWrapping="Wrap" Margin="2,12,2,0"
+                               Text="Tip: drop an image anywhere on this page to preview it, or drop a folder to use it for the slideshow." />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <c:BusyBar Grid.Row="2" Margin="0,10,0,0" DataContext="{Binding Busy}" />
+    </Grid>
+</UserControl>

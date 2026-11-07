@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+
+# Signing material — never commit certificates or passwords
+*.pfx
+*.p12
+signing.local.bat

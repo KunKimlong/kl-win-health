@@ -1,0 +1,313 @@
+<UserControl x:Class="KLWinHealth.Views.VirusCheckView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:KLWinHealth.Controls"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <Grid Margin="28,20,28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <c:PageHeader Title="Virus check" Icon="ShieldCheck" Subtitle="Microsoft Defender + heuristics + VirusTotal. Drag files or folders onto this window.">
+            <StackPanel Orientation="Horizontal">
+                <c:GlowButton Icon="FileSearchOutline" Content="Scan file" Variant="Primary" Command="{Binding ScanFileCommand}" />
+                <c:GlowButton Icon="FolderSearchOutline" Content="Scan folder" Variant="Primary" Margin="8,0,0,0" Command="{Binding ScanFolderCommand}" />
+                <c:GlowButton x:Name="ScanPcButton" Icon="Laptop" Content="Scan entire PC" Variant="Primary" Margin="8,0,0,0" Click="OnScanPcClick"
+                              ToolTip="Quick or full scan of the whole computer">
+                    <c:GlowButton.ContextMenu>
+                        <ContextMenu Placement="Bottom">
+                            <MenuItem Command="{Binding ScanPcCommand}" CommandParameter="Quick">
+                                <MenuItem.Icon><iconPacks:PackIconMaterial Kind="LightningBolt" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                                <MenuItem.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Quick scan" FontWeight="SemiBold" />
+                                        <TextBlock Text="Memory, startup and common malware locations · 5–15 min" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                            </MenuItem>
+                            <MenuItem Command="{Binding ScanPcCommand}" CommandParameter="Full">
+                                <MenuItem.Icon><iconPacks:PackIconMaterial Kind="Harddisk" Width="13" Height="13" Foreground="{StaticResource AccentBrush}" /></MenuItem.Icon>
+                                <MenuItem.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Full scan" FontWeight="SemiBold" />
+                                        <TextBlock Text="Every file on every drive · can take 1–3 hours" Foreground="{StaticResource TextMutedBrush}" FontSize="11.5" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                            </MenuItem>
+                        </ContextMenu>
+                    </c:GlowButton.ContextMenu>
+                </c:GlowButton>
+                <c:GlowButton Icon="Biohazard" Margin="8,0,0,0" Command="{Binding ToggleQuarantineCommand}">
+                    <TextBlock><Run Text="Quarantine (" /><Run Text="{Binding QuarantineItems.Count, Mode=OneWay}" /><Run Text=")" /></TextBlock>
+                </c:GlowButton>
+            </StackPanel>
+        </c:PageHeader>
+
+        <!-- Engine status + summary + filters -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Style="{StaticResource Badge}" Tag="{Binding DefenderAvailable, Converter={StaticResource OkErrorStatus}}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="MicrosoftWindows" Width="11" Height="11" VerticalAlignment="Center"
+                                                    Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=Border}, Converter={StaticResource StatusBrush}}" />
+                        <TextBlock Text="{Binding DefenderStatus}" Margin="6,0,0,0" Style="{StaticResource BadgeText}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Badge}" Tag="Info" Margin="8,0,0,0">
+                    <TextBlock Text="{Binding VirusTotalStatus}" Style="{StaticResource BadgeText}" />
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <RadioButton Style="{StaticResource Chip}" Content="All" GroupName="vf" IsChecked="{Binding Filter, Converter={StaticResource EqualsConv}, ConverterParameter=All}" />
+                <RadioButton Style="{StaticResource Chip}" GroupName="vf" IsChecked="{Binding Filter, Converter={StaticResource EqualsConv}, ConverterParameter=Clean}">
+                    <TextBlock><Run Text="Clean " /><Run Text="{Binding CleanCount, Mode=OneWay}" Foreground="{StaticResource AccentBrush}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource Chip}" GroupName="vf" IsChecked="{Binding Filter, Converter={StaticResource EqualsConv}, ConverterParameter=Suspicious}">
+                    <TextBlock><Run Text="Suspicious " /><Run Text="{Binding SuspiciousCount, Mode=OneWay}" Foreground="{StaticResource WarningBrush}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource Chip}" GroupName="vf" IsChecked="{Binding Filter, Converter={StaticResource EqualsConv}, ConverterParameter=Dangerous}">
+                    <TextBlock><Run Text="Dangerous " /><Run Text="{Binding DangerousCount, Mode=OneWay}" Foreground="{StaticResource DangerBrush}" /></TextBlock>
+                </RadioButton>
+                <TextBox Width="180" Margin="4,0,0,0" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=250}" Tag="Search…" ToolTip="Search file names and findings" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Results + details -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="340" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Drop zone (before first scan) -->
+            <c:AngledBorder CutSize="14" BorderThickness="1.5" Background="{StaticResource SurfaceBrush}"
+                            Visibility="{Binding HasScanned, Converter={StaticResource InverseBoolToVis}}">
+                <c:AngledBorder.BorderBrush>
+                    <VisualBrush TileMode="Tile" Viewport="0,0,12,12" ViewportUnits="Absolute">
+                        <VisualBrush.Visual>
+                            <Rectangle Width="12" Height="12" Fill="{StaticResource AccentDarkBrush}" />
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </c:AngledBorder.BorderBrush>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <iconPacks:PackIconMaterial Kind="ShieldSearch" Width="56" Height="56" HorizontalAlignment="Center" Foreground="{StaticResource AccentBrush}" Effect="{StaticResource TextGlow}" />
+                    <TextBlock Text="Drop files or folders here" Style="{StaticResource H2}" HorizontalAlignment="Center" Margin="0,14,0,0" FontSize="22" />
+                    <TextBlock Text="or use Scan file / Scan folder above — or scan the whole PC:" Style="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                        <c:GlowButton Icon="LightningBolt" Content="Quick scan" Variant="Primary" Command="{Binding ScanPcCommand}" CommandParameter="Quick"
+                                      ToolTip="Memory, startup items and common malware locations (5–15 min)" />
+                        <c:GlowButton Icon="Harddisk" Content="Full scan" Margin="10,0,0,0" Command="{Binding ScanPcCommand}" CommandParameter="Full"
+                                      ToolTip="Every file on every drive (can take 1–3 hours)" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource Muted}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,18,0,0" MaxWidth="460"
+                               Text="Every file is checked by Microsoft Defender, local heuristics (fake extensions, macros, risky PDF and script patterns, packing, signatures) and — if you added an API key — VirusTotal. Nothing is changed unless you click Quarantine." />
+                </StackPanel>
+            </c:AngledBorder>
+
+            <DataGrid x:Name="Grid" ItemsSource="{Binding ResultsView}" SelectedItem="{Binding SelectedResult}"
+                      Visibility="{Binding HasScanned, Converter={StaticResource BoolToVis}}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Verdict" Width="104" SortMemberPath="Score">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Badge}" Tag="{Binding Verdict}">
+                                    <TextBlock Text="{Binding Verdict}" Style="{StaticResource BadgeText}" />
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="58" />
+                    <DataGridTemplateColumn Header="File name" Width="2*" SortMemberPath="FileName">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Biohazard" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                Foreground="{StaticResource DangerBrush}" Visibility="{Binding IsQuarantined, Converter={StaticResource BoolToVis}}" />
+                                    <TextBlock Text="{Binding FileName}" Style="{StaticResource CellText}" ToolTip="{Binding FullPath}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Type" Binding="{Binding FileType}" Width="130" />
+                    <DataGridTemplateColumn Header="Findings" Width="3*" SortMemberPath="Summary">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Summary}" Style="{StaticResource CellText}" ToolTip="{Binding Summary}" Foreground="{StaticResource TextMutedBrush}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Signer" Width="120" SortMemberPath="Signer">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Signer}" Style="{StaticResource CellText}" ToolTip="{Binding Signer}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Detail panel -->
+            <c:AngledBorder Grid.Column="2" Style="{StaticResource Card}"
+                            Visibility="{Binding ShowQuarantine, Converter={StaticResource InverseBoolToVis}}">
+                <Grid>
+                    <TextBlock Text="Select a file to see details." Style="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding SelectedResult, Converter={StaticResource InverseNullToVis}}" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding SelectedResult, Converter={StaticResource NullToVis}}">
+                        <StackPanel DataContext="{Binding SelectedResult}">
+                            <Border Style="{StaticResource Badge}" Tag="{Binding Verdict}">
+                                <TextBlock Style="{StaticResource BadgeText}" FontSize="12">
+                                    <Run Text="{Binding Verdict, Mode=OneWay}" /><Run Text=" · score " /><Run Text="{Binding Score, Mode=OneWay}" />
+                                </TextBlock>
+                            </Border>
+                            <TextBlock Text="{Binding FileName}" Style="{StaticResource H3}" FontSize="17" Margin="0,8,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding FullPath}" Style="{StaticResource Muted}" FontSize="11.5" Margin="0,2,0,0" />
+
+                            <TextBlock Text="DETAILS" Style="{StaticResource SectionLabel}" Margin="0,14,0,4" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="82" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Size" Foreground="{StaticResource TextMutedBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Size, Converter={StaticResource Bytes}}" />
+                                <TextBlock Grid.Row="1" Text="Type" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FileType}" Margin="0,3,0,0" />
+                                <TextBlock Grid.Row="2" Text="Signer" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Signer, TargetNullValue='—'}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                <TextBlock Grid.Row="3" Text="SHA-256" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,3,0,0">
+                                    <TextBlock Text="{Binding Sha256}" FontFamily="{StaticResource MonoFont}" FontSize="10.5" TextWrapping="Wrap" />
+                                    <Button Content="Copy" HorizontalAlignment="Left" Padding="8,2" Margin="0,4,0,0" FontSize="11.5"
+                                            Command="{Binding DataContext.CopyShaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="MICROSOFT DEFENDER" Style="{StaticResource SectionLabel}" Margin="0,14,0,4" />
+                            <TextBlock Text="{Binding DefenderResult}" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DefenderThreat, Converter={StaticResource NullToVis}}" Value="Visible">
+                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <TextBlock Text="VIRUSTOTAL" Style="{StaticResource SectionLabel}" Margin="0,14,0,4" />
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="{Binding VirusTotalResult, Mode=OneWay}" />
+                                <Hyperlink Command="{Binding DataContext.OpenVirusTotalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Run Text=" Open report" />
+                                </Hyperlink>
+                            </TextBlock>
+
+                            <TextBlock Text="FINDINGS" Style="{StaticResource SectionLabel}" Margin="0,14,0,4" />
+                            <TextBlock Text="No heuristic findings." Style="{StaticResource Muted}" Visibility="{Binding Findings.Count, Converter={StaticResource ZeroToVis}}" />
+                            <ItemsControl ItemsSource="{Binding Findings}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="14" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Width="6" Height="6" VerticalAlignment="Top" Margin="0,6,0,0">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Category}" Value="Signature">
+                                                                <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Category}" Value="Info">
+                                                                <Setter Property="Fill" Value="{StaticResource TextMutedBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock Grid.Column="1" Text="{Binding Display}" TextWrapping="Wrap" FontSize="12.5" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </c:AngledBorder>
+
+            <!-- Quarantine panel -->
+            <c:AngledBorder Grid.Column="2" Style="{StaticResource Card}" Visibility="{Binding ShowQuarantine, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock Text="QUARANTINE" Style="{StaticResource SectionLabel}" />
+                        <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Command="{Binding ToggleQuarantineCommand}" ToolTip="Close">
+                            <iconPacks:PackIconMaterial Kind="Close" Width="11" Height="11" />
+                        </Button>
+                    </Grid>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding QuarantineItems}" SelectedItem="{Binding SelectedQuarantine}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding OriginalPath}" Style="{StaticResource Muted}" FontSize="11" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding DateText}" Style="{StaticResource Muted}" FontSize="11" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Grid.Row="1" Text="Quarantine is empty." Style="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding QuarantineItems.Count, Converter={StaticResource ZeroToVis}}" />
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                        <c:GlowButton Icon="DeleteForeverOutline" Content="Delete" Variant="Danger" Command="{Binding DeleteFromQuarantineCommand}" />
+                        <c:GlowButton Icon="Restore" Content="Restore" Margin="8,0,0,0" Command="{Binding RestoreFromQuarantineCommand}" />
+                    </StackPanel>
+                </Grid>
+            </c:AngledBorder>
+        </Grid>
+
+        <!-- Summary + actions -->
+        <Grid Grid.Row="3" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding HasScanned, Converter={StaticResource BoolToVis}}">
+                <TextBlock Foreground="{StaticResource TextMutedBrush}">
+                    <Run Text="Scanned " /><Run Text="{Binding ScannedCount, Mode=OneWay}" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" />
+                    <Run Text=" · clean " /><Run Text="{Binding CleanCount, Mode=OneWay}" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                    <Run Text=" · suspicious " /><Run Text="{Binding SuspiciousCount, Mode=OneWay}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
+                    <Run Text=" · dangerous " /><Run Text="{Binding DangerousCount, Mode=OneWay}" Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" />
+                    <Run Text=" · time " /><Run Text="{Binding ElapsedText, Mode=OneWay}" Foreground="{StaticResource TextBrush}" />
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <c:GlowButton Icon="Biohazard" Content="Quarantine" Variant="Danger" Command="{Binding QuarantineCommand}"
+                              CommandParameter="{Binding SelectedItems, ElementName=Grid}" />
+                <c:GlowButton Icon="FolderOpenOutline" Content="Open location" Margin="8,0,0,0" Command="{Binding OpenLocationCommand}" />
+                <c:GlowButton Icon="FileDelimitedOutline" Content="Export CSV" Margin="8,0,0,0" Command="{Binding ExportCsvCommand}" />
+                <c:GlowButton Icon="Broom" Content="Clear" Margin="8,0,0,0" Command="{Binding ClearResultsCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <c:BusyBar Grid.Row="4" Margin="0,10,0,0" DataContext="{Binding Busy}" />
+    </Grid>
+</UserControl>
