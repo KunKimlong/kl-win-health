@@ -38,7 +38,11 @@ public static class Installer
     /// <summary>Exe that scheduled tasks should point at: the installed copy when there is one.</summary>
     public static string TargetExe => IsInstalled ? InstalledExe : AppPaths.ExePath;
 
-    /// <summary>True when the running exe is the same build as the installed copy (File.Copy keeps the timestamp).</summary>
+    /// <summary>
+    /// True when the installed copy should be used as-is: it is this build, or it is a newer version
+    /// (running an old download must never downgrade the install). Same version but a different file
+    /// (rebuilt without a version bump) counts as an update. File.Copy keeps the timestamp.
+    /// </summary>
     private static bool InstalledCopyIsCurrent()
     {
         if (IsRunningInstalled) return true;
@@ -46,9 +50,24 @@ public static class Installer
         {
             var me = new FileInfo(AppPaths.ExePath);
             var inst = new FileInfo(InstalledExe);
-            return inst.Exists && me.Length == inst.Length && me.LastWriteTimeUtc == inst.LastWriteTimeUtc;
+            if (!inst.Exists) return false;
+
+            var cmp = FileVersionOf(AppPaths.ExePath).CompareTo(FileVersionOf(InstalledExe));
+            if (cmp < 0)
+            {
+                Log.Information("Installed copy is newer than this exe; not downgrading");
+                return true;
+            }
+            if (cmp > 0) return false;
+            return me.Length == inst.Length && me.LastWriteTimeUtc == inst.LastWriteTimeUtc;
         }
         catch { return false; }
+    }
+
+    private static Version FileVersionOf(string exe)
+    {
+        var v = FileVersionInfo.GetVersionInfo(exe);
+        return new Version(v.FileMajorPart, v.FileMinorPart, v.FileBuildPart, v.FilePrivatePart);
     }
 
     // ------------------------------------------------------------------ unelevated side

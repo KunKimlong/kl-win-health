@@ -13,7 +13,10 @@
     <Product>KL Win Health</Product>
     <AssemblyTitle>KL Win Health</AssemblyTitle>
     <Company>KL</Company>
-    <Version>1.0.0</Version>
+    <!-- Bump for every release you hand out. The installer compares this number: a newer exe updates the
+         installed copy, an older one never downgrades it. -->
+    <Version>1.1.0</Version>
+    <Copyright>© KL</Copyright>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PlatformTarget>x64</PlatformTarget>

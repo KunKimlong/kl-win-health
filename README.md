@@ -28,6 +28,33 @@ dotnet publish KLWinHealth\KLWinHealth.csproj -c Release -r win-x64 --self-conta
 
 For development, use `dotnet build KLWinHealth\KLWinHealth.csproj` and run `KLWinHealth\bin\Debug\net8.0-windows\win-x64\KLWinHealth.exe`.
 
+`build.bat` also writes `publish\KLWinHealth.exe.sha256` so people who download the exe can check it wasn't altered.
+
+### Releasing a new version
+
+1. Bump `<Version>` in `KLWinHealth\KLWinHealth.csproj` and add a section to `CHANGELOG.md`.
+2. Run `build.bat`.
+3. Commit, then tag the release: `git tag v1.1.0`.
+
+When the exe runs, the installer compares version numbers. A **newer** exe updates the copy in Program Files. An **older** exe never downgrades it and opens the installed copy instead. A rebuild with the **same** version but a different file is treated as an update.
+
+### Code signing
+
+Unsigned exes make SmartScreen show *"Windows protected your PC"* and UAC show *"Unknown publisher"* on other PCs. To sign:
+
+1. Get a code-signing certificate. Options: an OV or EV certificate from a CA (Sectigo, DigiCert, SSL.com…), or [Azure Trusted Signing](https://learn.microsoft.com/azure/trusted-signing/) (low monthly cost). EV and Trusted Signing build SmartScreen reputation fastest.
+2. Install the **Windows SDK** (only the *Signing Tools* feature is needed) to get `signtool.exe`.
+3. Create `signing.local.bat` next to `build.bat`. It is git-ignored, so never commit it:
+   ```bat
+   set "KL_SIGN_PFX=C:\certs\kl-codesign.pfx"
+   set "KL_SIGN_PASSWORD=your-pfx-password"
+   rem or, for a certificate in the Windows store / on a USB token:
+   rem set "KL_SIGN_THUMBPRINT=0123ABCD..."
+   ```
+4. Run `build.bat`. It signs with SHA-256 and a timestamp, so the signature stays valid after the certificate expires.
+
+Without `signing.local.bat`, `build.bat` builds unsigned and prints a note.
+
 ### Administrator rights: UAC only once
 
 The app needs administrator rights, but it asks for them **only the first time**:
