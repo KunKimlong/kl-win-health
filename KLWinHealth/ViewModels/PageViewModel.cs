@@ -127,6 +127,7 @@ public abstract partial class PageViewModel : ObservableObject
         System.ComponentModel.Win32Exception w when w.NativeErrorCode == 1051 => "Other running services depend on this one, so it can't be stopped.",
         System.IO.IOException io when io.HResult == unchecked((int)0x80070020) => "The file is in use by another program.",
         InvalidOperationException { InnerException: System.ComponentModel.Win32Exception w } => FriendlyError(w),
+        System.Net.Http.HttpRequestException => "Couldn't reach the server. Check your internet connection and try again.",
         _ => ex.Message
     };
 }

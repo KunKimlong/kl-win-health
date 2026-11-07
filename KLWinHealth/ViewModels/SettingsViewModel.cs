@@ -34,9 +34,18 @@ public partial class SettingsViewModel : PageViewModel
     public string DataFolder => AppPaths.Root;
     public bool IsAdmin { get; } = ShellHelper.IsAdministrator();
 
-    public SettingsViewModel(PageContext ctx, SchedulerService scheduler) : base(ctx)
+    // Updates
+    private readonly UpdateService _updates;
+    [ObservableProperty] private bool _checkForUpdates;
+    [ObservableProperty] private string _updateStatus = "";
+    [ObservableProperty] private UpdateInfo? _availableUpdate;
+    public bool UpdatesConfigured => UpdateService.IsConfigured;
+
+    public SettingsViewModel(PageContext ctx, SchedulerService scheduler, UpdateService updates) : base(ctx)
     {
         _scheduler = scheduler;
+        _updates = updates;
+        _updates.UpdateAvailable += info => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => ShowUpdate(info));
         Backups.Changed += (_, _) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(LoadBackups);
     }
 
@@ -51,6 +60,10 @@ public partial class SettingsViewModel : PageViewModel
             AutoCleanEnabled = s.AutoCleanEnabled;
             AutoCleanDay = s.AutoCleanDay;
             AutoCleanTime = s.AutoCleanTime;
+            CheckForUpdates = s.CheckForUpdates;
+            if (_updates.Available is { } u) ShowUpdate(u);
+            else UpdateStatus = !UpdatesConfigured ? "Updates are not set up for this build."
+                : s.LastUpdateCheck is { } t ? $"Up to date · last checked {t.ToLocalTime():g}" : "Not checked yet";
             LoadBackups();
             StartWithWindows = await _scheduler.ExistsAsync(SchedulerService.StartupTask);
             var cleanTask = await _scheduler.ExistsAsync(SchedulerService.AutoCleanTask);
@@ -96,6 +109,63 @@ public partial class SettingsViewModel : PageViewModel
         Settings.Current.MinimizeToTrayOnClose = value;
         Settings.Save();
     }
+
+    partial void OnCheckForUpdatesChanged(bool value)
+    {
+        if (_loading) return;
+        Settings.Current.CheckForUpdates = value;
+        Settings.Save();
+    }
+
+    private void ShowUpdate(UpdateInfo info)
+    {
+        AvailableUpdate = info;
+        UpdateStatus = $"Version {info.Version.ToString(3)} is available (you have {UpdateService.CurrentVersion.ToString(3)}).";
+    }
+
+    [RelayCommand]
+    private async Task CheckUpdatesAsync()
+    {
+        await RunBusyAsync("Checking for updates…", async ct =>
+        {
+            var info = await _updates.CheckAsync(ct);
+            if (info == null)
+            {
+                AvailableUpdate = null;
+                UpdateStatus = $"Up to date · last checked {DateTime.Now:g}";
+                Dialogs.Toast($"You have the latest version ({UpdateService.CurrentVersion.ToString(3)}).", ToastKind.Success);
+            }
+            else ShowUpdate(info);
+        }, errorTitle: "Check for updates");
+    }
+
+    [RelayCommand]
+    private async Task InstallUpdateAsync()
+    {
+        if (AvailableUpdate is not { } info) return;
+        if (!await Dialogs.ConfirmAsync("Install update",
+                $"Download and install KL Win Health {info.Version.ToString(3)}? The app closes for a few seconds and reopens; widgets come back by themselves.",
+                string.IsNullOrWhiteSpace(info.Notes) ? null : info.Notes.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Take(12),
+                "Install")) return;
+        string? exe = null;
+        await RunBusyAsync("Downloading update…", async ct =>
+        {
+            exe = await _updates.DownloadAsync(info, new Progress<double>(p => Busy.Report(p, $"Downloading update… {p:0}%")), ct);
+        }, errorTitle: "Install update");
+        if (exe == null) return;
+        try
+        {
+            UpdateService.LaunchInstaller(exe);
+            ((App)System.Windows.Application.Current).ExitApp();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Starting the update failed");
+            await Dialogs.ErrorAsync("Install update", FriendlyError(ex));
+        }
+    }
+
+    [RelayCommand] private void OpenReleases() => ShellHelper.OpenUrl(AvailableUpdate?.ReleaseUrl ?? UpdateService.ReleasesPage);
 
     [RelayCommand]
     private void SaveVirusTotalKey(object? parameter)

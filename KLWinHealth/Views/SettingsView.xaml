@@ -39,6 +39,26 @@
                         </StackPanel>
                     </c:AngledBorder>
 
+                    <!-- Updates -->
+                    <c:AngledBorder Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="{Binding UpdatesConfigured, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="UPDATES" Style="{StaticResource SectionLabel}" />
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding CheckForUpdates}" Margin="0,4">
+                                <StackPanel>
+                                    <TextBlock Text="Check for updates automatically" />
+                                    <TextBlock Text="Once a day. You choose when to install." Style="{StaticResource Muted}" FontSize="11.5" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <TextBlock Text="{Binding UpdateStatus}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                            <WrapPanel Margin="0,8,0,0">
+                                <c:GlowButton Icon="Refresh" Content="Check now" Command="{Binding CheckUpdatesCommand}" Margin="0,0,8,0" />
+                                <c:GlowButton Icon="Download" Content="Install update" Command="{Binding InstallUpdateCommand}" Margin="0,0,8,0"
+                                              Visibility="{Binding AvailableUpdate, Converter={StaticResource NullToVis}}" />
+                                <c:GlowButton Icon="OpenInNew" Content="What's new" Command="{Binding OpenReleasesCommand}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </c:AngledBorder>
+
                     <!-- VirusTotal -->
                     <c:AngledBorder Style="{StaticResource Card}" Margin="0,12,0,0">
                         <StackPanel>

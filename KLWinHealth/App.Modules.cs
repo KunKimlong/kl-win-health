@@ -66,6 +66,12 @@ public partial class App
         Services.GetRequiredService<SettingsService>().Saved += (_, _) => SyncTray();
         wallpaper.ResumeIfEnabled();
 
+        // Updates: check GitHub Releases at startup and daily; tell the user from the tray.
+        var updates = Services.GetRequiredService<UpdateService>();
+        updates.UpdateAvailable += info => Dispatcher.BeginInvoke(() =>
+            tray.ShowNotification("Update available", $"KL Win Health {info.Version.ToString(3)} is ready. Open Settings → Updates to install."));
+        _ = updates.RunBackgroundChecksAsync(_updateCts.Token);
+
         // Desktop widgets: tray "Widgets: edit mode / locked", widget menu "Edit in KL Win Health".
         var widgets = Services.GetRequiredService<KLWinHealth.Services.Widgets.WidgetManager>();
         tray.WidgetsLockRequested += locked => widgets.SetLocked(locked);
@@ -98,8 +104,11 @@ public partial class App
         widgets.Start();
     }
 
+    private readonly CancellationTokenSource _updateCts = new();
+
     partial void StopBackgroundFeaturesImpl()
     {
+        _updateCts.Cancel();
         Services.GetService<WallpaperService>()?.StopSlideshow(save: false);
         Services.GetService<KLWinHealth.Services.Widgets.WidgetManager>()?.Stop();
     }

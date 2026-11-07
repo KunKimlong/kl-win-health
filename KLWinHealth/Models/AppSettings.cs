@@ -11,6 +11,10 @@ public class AppSettings
     /// </summary>
     public bool? StartWithWindows { get; set; }
 
+    // Updates (GitHub Releases)
+    public bool CheckForUpdates { get; set; } = true;
+    public DateTime? LastUpdateCheck { get; set; }
+
     /// <summary>DPAPI-protected (CurrentUser scope) VirusTotal key, base64.</summary>
     public string? VirusTotalApiKeyProtected { get; set; }
 

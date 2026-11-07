@@ -45,6 +45,15 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Fatal(ex.ExceptionObject as Exception, "Unhandled exception");
         TaskScheduler.UnobservedTaskException += (_, ex) => { Log.Error(ex.Exception, "Unobserved task exception"); ex.SetObserved(); };
 
+        // Self-update: the new exe waits until the old app has exited (frees the single-instance mutex and the
+        // installed exe file) before it installs itself.
+        var waitPid = e.Args.FirstOrDefault(a => a.StartsWith("--wait-exit=", StringComparison.OrdinalIgnoreCase))?[12..];
+        if (int.TryParse(waitPid, out var pid))
+        {
+            try { using var old = Process.GetProcessById(pid); old.WaitForExit(30_000); }
+            catch (ArgumentException) { /* already gone */ }
+        }
+
         IsAdmin = ShellHelper.IsAdministrator();
         Log.Information("KL Win Health {Version} starting (admin={Admin}, args={Args})",
             typeof(App).Assembly.GetName().Version, IsAdmin, string.Join(' ', e.Args));
@@ -191,6 +200,16 @@ public partial class App : Application
         }
 #endif
 
+        if (args.Contains("--updated"))
+        {
+            Services.GetRequiredService<DialogService>().Toast($"Updated to version {UpdateService.CurrentVersion.ToString(3)}.", ToastKind.Success);
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10)); // the downloaded installer exe exits right after hand-over
+                try { Directory.Delete(Path.Combine(AppPaths.Root, "updates"), recursive: true); } catch { }
+            });
+        }
+
         if (!IsAdmin)
         {
             Log.Warning("Not running as administrator — limited mode");
@@ -219,6 +238,7 @@ public partial class App : Application
         s.AddSingleton<NavigationService>();
         s.AddSingleton<SystemStatsService>();
         s.AddSingleton<TrayService>();
+        s.AddSingleton<UpdateService>();
         s.AddSingleton<PageContext>();
         // Windows / view models
         s.AddSingleton<MainViewModel>();

@@ -34,7 +34,17 @@ For development, use `dotnet build KLWinHealth\KLWinHealth.csproj` and run `KLWi
 
 1. Bump `<Version>` in `KLWinHealth\KLWinHealth.csproj` and add a section to `CHANGELOG.md`.
 2. Run `build.bat`.
-3. Commit, then tag the release: `git tag v1.1.0`.
+3. Commit, tag the release (`git tag v1.1.0`) and push: `git push origin main --tags`.
+4. On GitHub, open [Releases](https://github.com/KunKimlong/kl-win-health/releases) → **Draft a new release**. Pick the tag, paste the changelog section as the description, and attach **both** `publish\KLWinHealth.exe` and `publish\KLWinHealth.exe.sha256`. Publish it. Don't mark it as a pre-release, or the updater ignores it.
+
+### Automatic updates
+
+Installed apps check `github.com/KunKimlong/kl-win-health` once a day (turn this off in **Settings → Updates**). When a release has a higher version, the tray shows a notification. **Settings → Updates → Install update** downloads it and verifies it:
+- the SHA-256 must match the `.sha256` file in the release;
+- if the running build is code-signed, the update must be signed by the same publisher;
+- the exe's version must match the release tag.
+
+Then the app closes, the new exe installs itself and the app reopens. Widgets come back by themselves. The repo must stay **public** for this to work. The owner and repo are set in `Services\UpdateService.cs`.
 
 When the exe runs, the installer compares version numbers. A **newer** exe updates the copy in Program Files. An **older** exe never downgrades it and opens the installed copy instead. A rebuild with the **same** version but a different file is treated as an update.
 
